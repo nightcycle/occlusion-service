@@ -2,10 +2,18 @@
 name = "nightcycle/package"
 description = "A package!"
 version = "0.1.0"
-authors = ["CJ Oyer <coyer@nightcycle.us>"]
+authors = [ "CJ Oyer <coyer@nightcycle.us>",]
 realm = "shared"
 registry = "https://github.com/upliftgames/wally-index"
-exclude = ["Packages", ".vscode"]
+exclude = [ "Packages", ".vscode",]
 
 [dependencies]
-Maid = "nightcycle/maid@^1.1.4"
+Maid = "nightcycle/maid@1.1.4"
+GeometryUtil = "nightcycle/geometry-util@2.0.1"
+Quaternion = "sleitnick/quaternion@0.2.1"
+ServiceProxy = "nightcycle/service-proxy@1.0.0"
+Draw = "nightcycle/draw@1.0.6"
+CompressionUtil = "nightcycle/compression-util@3.1.2"
+TableUtil = "nightcycle/table-util@1.1.0"
+Signal = "nightcycle/signal@1.0.2"
+OcclusionCamera = "nightcycle/occlusion-camera@0.2.2"

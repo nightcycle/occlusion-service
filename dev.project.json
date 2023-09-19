@@ -10,6 +10,21 @@
 		   "$path": "src"
 		 }
 	    }
+	  },
+	  "ServerScriptService": {
+		"$className": "ServerScriptService",
+		"Server": {
+			"$path": "dev/Server"
+		}
+	  },
+	  "StarterPlayer": {
+		"$className": "StarterPlayer",
+		"StarterPlayerScripts": {
+			"$className": "StarterPlayerScripts",
+			"Client": {
+				"$path": "dev/Client"
+			}
+		}
 	  }
 	}
    }
