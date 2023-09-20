@@ -24,14 +24,15 @@ export type OcclusionService = {
 	_Dependencies: {[BasePart]: {[number]: Instance}},
 	_Shadows: {[BasePart]: {[number]: Instance}},
 	_OcclusionCamera: OcclusionCamera,
-	_RegionPartTag: string,
+	_RegionTag: string,
+	_NoOccludeTag: string,
 	_Radius: number,
 	WorldRoot: WorldRoot,
 	QueryRadiusOnMovementOnly: boolean,
 	RegisterRegionPart: (self: OcclusionService, part: BasePart, dependents: {[number]: Instance}, shadows: {[number]: Instance}) -> (),
 	DeregisterRegionPart: (self: OcclusionService, part: BasePart) -> (),
 	SetRadius: (self: OcclusionService, radius: number) -> (),
-	SetRegionPartTag: (self: OcclusionService, tag: string) -> (),
+	SetRegionPartTag: (self: OcclusionService, regionTag: string, noOccludeTag: string) -> (),
 	_HidePart: (self: OcclusionService, part: BasePart) -> (),
 	_LoadPart: (self: OcclusionService, part: BasePart) -> (),
 	Destroy: (self: OcclusionService) -> (),
@@ -41,6 +42,7 @@ export type OcclusionService = {
 
 -- Constants
 local ORIGINAL_PARENT_OBJ_NAME = "OcclusionServiceParentReference"
+
 local DEBUG_HIGHLIGHT_ENABLED = true
 -- Variables
 -- References
@@ -119,11 +121,12 @@ function OcclusionService:_LoadPart(part: BasePart)
 	end
 end
 
-function OcclusionService:SetRegionPartTag(tag: string)
+function OcclusionService:SetRegionPartTag(regionTag: string, noOccludeTag: string)
 	for k, _ in pairs(self._Dependencies) do
-		assert(CollectionService:HasTag(k, tag), `registered region part {k:GetFullName()} is missing new tag {tag}`)
+		assert(CollectionService:HasTag(k, regionTag), `registered region part {k:GetFullName()} is missing new tag {regionTag}`)
 	end
-	self._RegionPartTag = tag
+	self._NoOccludeTag = noOccludeTag
+	self._RegionTag = regionTag
 end
 
 function OcclusionService:SetRadius(radius: number)
@@ -132,7 +135,7 @@ function OcclusionService:SetRadius(radius: number)
 end
 
 function OcclusionService:RegisterRegionPart(part: BasePart, dependents: {[number]: Instance}, shadows: {[number]: Instance})
-	assert(CollectionService:HasTag(part, self._RegionPartTag), `region part {part:GetFullName()} doesn't have region tag {self._RegionPartTag}`)
+	assert(CollectionService:HasTag(part, self._RegionTag), `region part {part:GetFullName()} doesn't have region tag {self._RegionTag}`)
 	
 	if self._Dependencies[part] ~= nil then warn(`part {part:GetFullName()} is already registered`); return end
 
@@ -193,7 +196,8 @@ function OcclusionService.new()
 	self._Visibility = {}
 	self._Dependencies = {}
 	self.QueryRadiusOnMovementOnly = true
-	self._RegionPartTag = "OcclusionRegionPart"
+	self._RegionTag = "OcclusionServiceRegion"
+	self._NoOccludeTag = "OcclusionServiceNoOcclude"
 	self._Radius = 512
 
 	local highlights: {[BasePart]: Highlight} = {}
@@ -269,7 +273,7 @@ function OcclusionService.new()
 			position = origin
 
 			local overlapParams = OverlapParams.new()
-			overlapParams.FilterDescendantsInstances = CollectionService:GetTagged(self._RegionPartTag)
+			overlapParams.FilterDescendantsInstances = CollectionService:GetTagged(self._RegionTag)
 			overlapParams.FilterType = Enum.RaycastFilterType.Include
 			overlapParams.RespectCanCollide = false
 
