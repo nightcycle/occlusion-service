@@ -3,6 +3,7 @@ local _Package = script
 local _Packages = _Package.Parent
 
 -- Services
+local Players = game:GetService("Players")
 
 -- Packages
 local OcclusionCamera = require(_Packages:WaitForChild("OcclusionCamera"))
@@ -37,6 +38,14 @@ local ORIGINAL_PARENT_OBJ_NAME = "OcclusionServiceParentReference"
 local DEBUG_HIGHLIGHT_ENABLED = false
 -- Variables
 -- References
+local Player = Players.LocalPlayer
+assert(Player, `bad player`)
+local PlayerGui = Player:WaitForChild("PlayerGui")
+local Bin = Instance.new("ScreenGui")
+Bin.ResetOnSpawn = false
+Bin.Name = "OcclusionServiceBin"
+Bin.Parent = PlayerGui
+
 -- Private Functions
 
 -- Class
@@ -75,7 +84,7 @@ function OcclusionService:_HidePart(part: BasePart)
 	if dependents then
 		for i, inst in ipairs(dependents) do
 			if inst:FindFirstChild(ORIGINAL_PARENT_OBJ_NAME) then
-				inst.Parent = nil
+				inst.Parent = Bin
 			end
 		end
 	end
@@ -110,7 +119,7 @@ function OcclusionService:_LoadPart(part: BasePart)
 	local shadows = self._Shadows[part]
 	if shadows then
 		for i, inst in ipairs(shadows) do
-			inst.Parent = nil
+			inst.Parent = Bin
 		end
 	end
 end
@@ -133,7 +142,7 @@ function OcclusionService:RegisterRegionPart(part: BasePart, dependents: { [numb
 		parentRef.Parent = v
 	end
 	for i, v in ipairs(self._Shadows[part]) do
-		v.Parent = nil
+		v.Parent = Bin
 	end
 
 	local parts: {[number]: Instance} = {}
