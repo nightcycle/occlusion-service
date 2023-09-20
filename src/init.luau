@@ -125,6 +125,7 @@ function OcclusionService:SetRegionPartTag(regionTag: string, noOccludeTag: stri
 	for k, _ in pairs(self._Dependencies) do
 		assert(CollectionService:HasTag(k, regionTag), `registered region part {k:GetFullName()} is missing new tag {regionTag}`)
 	end
+	self._OcclusionCamera.NoOccludeTag = noOccludeTag
 	self._NoOccludeTag = noOccludeTag
 	self._RegionTag = regionTag
 end

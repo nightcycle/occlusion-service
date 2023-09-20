@@ -10,4 +10,4 @@ exclude = [ "Packages", ".vscode",]
 [dependencies]
 Maid = "nightcycle/maid@1.1.4"
 ServiceProxy = "nightcycle/service-proxy@1.0.0"
-OcclusionCamera = "nightcycle/occlusion-camera@0.2.2"
+OcclusionCamera = "nightcycle/occlusion-camera@1.0.2"
