@@ -3,7 +3,6 @@ local _Package = script
 local _Packages = _Package.Parent
 
 -- Services
-local CollectionService = game:GetService("CollectionService")
 
 -- Packages
 local OcclusionCamera = require(_Packages:WaitForChild("OcclusionCamera"))
@@ -23,11 +22,8 @@ export type OcclusionService = {
 	_Dependencies: { [BasePart]: { [number]: Instance } },
 	_Shadows: { [BasePart]: { [number]: Instance } },
 	OcclusionCamera: OcclusionCamera,
-	_RegionTag: string,
-	_NoOccludeTag: string,
 	RegisterRegionPart: (self: OcclusionService, part: BasePart, dependents: { [number]: Instance }, shadows: { [number]: Instance }) -> (),
 	DeregisterRegionPart: (self: OcclusionService, part: BasePart) -> (),
-	SetRegionPartTag: (self: OcclusionService, regionTag: string, noOccludeTag: string) -> (),
 	_HidePart: (self: OcclusionService, part: BasePart) -> (),
 	_LoadPart: (self: OcclusionService, part: BasePart) -> (),
 	Destroy: (self: OcclusionService) -> (),
@@ -121,17 +117,7 @@ function OcclusionService:_LoadPart(part: BasePart)
 	end
 end
 
-function OcclusionService:SetRegionPartTag(regionTag: string, noOccludeTag: string)
-	for k, _ in pairs(self._Dependencies) do
-		assert(CollectionService:HasTag(k, regionTag), `registered region part {k:GetFullName()} is missing new tag {regionTag}`)
-	end
-	self.OcclusionCamera.NoOccludeTag = noOccludeTag
-	self._NoOccludeTag = noOccludeTag
-	self._RegionTag = regionTag
-end
-
 function OcclusionService:RegisterRegionPart(part: BasePart, dependents: { [number]: Instance }, shadows: { [number]: Instance })
-	assert(CollectionService:HasTag(part, self._RegionTag), `region part {part:GetFullName()} doesn't have region tag {self._RegionTag}`)
 
 	if self._Dependencies[part] ~= nil then
 		warn(`part {part:GetFullName()} is already registered`)
@@ -208,8 +194,6 @@ function OcclusionService.new()
 	self._Visibility = {}
 	self._Shadows = {}
 	self._Dependencies = {}
-	self._RegionTag = "OcclusionServiceRegion"
-	self._NoOccludeTag = "OcclusionServiceNoOcclude"
 
 	local highlights: { [BasePart]: Highlight } = {}
 	if DEBUG_HIGHLIGHT_ENABLED then
