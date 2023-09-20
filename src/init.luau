@@ -71,7 +71,6 @@ function OcclusionService:_HidePart(part: BasePart)
 		print(`hiding {part}`)
 	end
 	self._Visibility[part] = false
-	part.Transparency = 1
 	local dependents = self._Dependencies[part]
 	if dependents then
 		for i, inst in ipairs(dependents) do
@@ -97,7 +96,6 @@ function OcclusionService:_LoadPart(part: BasePart)
 	if DEBUG_HIGHLIGHT_ENABLED then
 		print(`loading {part}`)
 	end
-	part.Transparency = 0
 	local dependents = self._Dependencies[part]
 	if dependents then
 		for i, inst in ipairs(dependents) do
