@@ -3,11 +3,10 @@ local _Package = script
 local _Packages = _Package.Parent
 
 -- Services
-local RunService = game:GetService("RunService")
 local CollectionService = game:GetService("CollectionService")
 
 -- Packages
-local OcclusionCamera =require(_Packages:WaitForChild("OcclusionCamera"))
+local OcclusionCamera = require(_Packages:WaitForChild("OcclusionCamera"))
 local Maid = require(_Packages:WaitForChild("Maid"))
 local ServiceProxy = require(_Packages:WaitForChild("ServiceProxy"))
 
@@ -20,30 +19,26 @@ export type OcclusionService = {
 	__index: OcclusionService,
 	_Maid: Maid,
 	_IsAlive: boolean,
-	_Visibility: {[BasePart]: boolean},
-	_Dependencies: {[BasePart]: {[number]: Instance}},
-	_Shadows: {[BasePart]: {[number]: Instance}},
-	_OcclusionCamera: OcclusionCamera,
+	_Visibility: { [BasePart]: boolean },
+	_Dependencies: { [BasePart]: { [number]: Instance } },
+	_Shadows: { [BasePart]: { [number]: Instance } },
+	OcclusionCamera: OcclusionCamera,
 	_RegionTag: string,
 	_NoOccludeTag: string,
-	_Radius: number,
-	WorldRoot: WorldRoot,
-	QueryRadiusOnMovementOnly: boolean,
-	RegisterRegionPart: (self: OcclusionService, part: BasePart, dependents: {[number]: Instance}, shadows: {[number]: Instance}) -> (),
+	RegisterRegionPart: (self: OcclusionService, part: BasePart, dependents: { [number]: Instance }, shadows: { [number]: Instance }) -> (),
 	DeregisterRegionPart: (self: OcclusionService, part: BasePart) -> (),
-	SetRadius: (self: OcclusionService, radius: number) -> (),
 	SetRegionPartTag: (self: OcclusionService, regionTag: string, noOccludeTag: string) -> (),
 	_HidePart: (self: OcclusionService, part: BasePart) -> (),
 	_LoadPart: (self: OcclusionService, part: BasePart) -> (),
 	Destroy: (self: OcclusionService) -> (),
 	new: () -> OcclusionService,
-	init: (maid: Maid) -> nil
+	init: (maid: Maid) -> nil,
 }
 
 -- Constants
 local ORIGINAL_PARENT_OBJ_NAME = "OcclusionServiceParentReference"
 
-local DEBUG_HIGHLIGHT_ENABLED = true
+local DEBUG_HIGHLIGHT_ENABLED = false
 -- Variables
 -- References
 -- Private Functions
@@ -54,7 +49,9 @@ local OcclusionService = {} :: OcclusionService
 OcclusionService.__index = OcclusionService
 
 function OcclusionService:Destroy()
-	if not self._IsAlive then return end
+	if not self._IsAlive then
+		return
+	end
 	self._IsAlive = false
 	if CurrentOcclusionService == self then
 		CurrentOcclusionService = nil :: any
@@ -71,7 +68,9 @@ function OcclusionService:Destroy()
 end
 
 function OcclusionService:_HidePart(part: BasePart)
-	if self._Visibility[part] == false then return end
+	if self._Visibility[part] == false then
+		return
+	end
 	if DEBUG_HIGHLIGHT_ENABLED then
 		print(`hiding {part}`)
 	end
@@ -95,7 +94,9 @@ function OcclusionService:_HidePart(part: BasePart)
 end
 
 function OcclusionService:_LoadPart(part: BasePart)
-	if self._Visibility[part] == true then return end
+	if self._Visibility[part] == true then
+		return
+	end
 	self._Visibility[part] = true
 	if DEBUG_HIGHLIGHT_ENABLED then
 		print(`loading {part}`)
@@ -112,7 +113,6 @@ function OcclusionService:_LoadPart(part: BasePart)
 		end
 	end
 
-	
 	local shadows = self._Shadows[part]
 	if shadows then
 		for i, inst in ipairs(shadows) do
@@ -125,20 +125,18 @@ function OcclusionService:SetRegionPartTag(regionTag: string, noOccludeTag: stri
 	for k, _ in pairs(self._Dependencies) do
 		assert(CollectionService:HasTag(k, regionTag), `registered region part {k:GetFullName()} is missing new tag {regionTag}`)
 	end
-	self._OcclusionCamera.NoOccludeTag = noOccludeTag
+	self.OcclusionCamera.NoOccludeTag = noOccludeTag
 	self._NoOccludeTag = noOccludeTag
 	self._RegionTag = regionTag
 end
 
-function OcclusionService:SetRadius(radius: number)
-	self._Radius = radius
-	self._OcclusionCamera.MaxRenderDistance = radius
-end
-
-function OcclusionService:RegisterRegionPart(part: BasePart, dependents: {[number]: Instance}, shadows: {[number]: Instance})
+function OcclusionService:RegisterRegionPart(part: BasePart, dependents: { [number]: Instance }, shadows: { [number]: Instance })
 	assert(CollectionService:HasTag(part, self._RegionTag), `region part {part:GetFullName()} doesn't have region tag {self._RegionTag}`)
-	
-	if self._Dependencies[part] ~= nil then warn(`part {part:GetFullName()} is already registered`); return end
+
+	if self._Dependencies[part] ~= nil then
+		warn(`part {part:GetFullName()} is already registered`)
+		return
+	end
 
 	self._Dependencies[part] = table.clone(dependents)
 	self._Shadows[part] = table.clone(shadows)
@@ -154,10 +152,19 @@ function OcclusionService:RegisterRegionPart(part: BasePart, dependents: {[numbe
 		v.Parent = nil
 	end
 
+	local parts: {[number]: Instance} = {}
+	for k, _ in pairs(self._Dependencies) do
+		table.insert(parts, k)
+	end
+	self.OcclusionCamera.RaycastParams.FilterDescendantsInstances = parts
+
 	self._Visibility[part] = true
-	if not self._OcclusionCamera:GetIfPartIsVisible(part) then
+	if not self.OcclusionCamera:GetIfPartIsVisible(part) then
 		self:_HidePart(part)
 	end
+
+
+
 end
 
 function OcclusionService:DeregisterRegionPart(part: BasePart)
@@ -173,6 +180,12 @@ function OcclusionService:DeregisterRegionPart(part: BasePart)
 		table.clear(dependents)
 	end
 
+	local parts: {[number]: Instance} = {}
+	for k, _ in pairs(self._Dependencies) do
+		table.insert(parts, k)
+	end
+	self.OcclusionCamera.RaycastParams.FilterDescendantsInstances = parts
+
 	local shadows = self._Shadows[part]
 	if shadows then
 		table.clear(shadows)
@@ -184,24 +197,21 @@ function OcclusionService:DeregisterRegionPart(part: BasePart)
 end
 
 function OcclusionService.new()
-
 	local self: OcclusionService = setmetatable({}, OcclusionService) :: any
 	self._IsAlive = true
 	self._Maid = Maid.new()
-	self.WorldRoot = workspace
 
-	self._OcclusionCamera = self._Maid:GiveTask(OcclusionCamera.new(workspace.CurrentCamera))
-	self._OcclusionCamera.RaycastParams.FilterType = Enum.RaycastFilterType.Include
-	self._OcclusionCamera.RaycastParams.FilterDescendantsInstances = {}
+	self.OcclusionCamera = self._Maid:GiveTask(OcclusionCamera.new(workspace.CurrentCamera))
+	self.OcclusionCamera.RaycastParams.FilterType = Enum.RaycastFilterType.Include
+	self.OcclusionCamera.RaycastParams.FilterDescendantsInstances = {}
 
 	self._Visibility = {}
+	self._Shadows = {}
 	self._Dependencies = {}
-	self.QueryRadiusOnMovementOnly = true
 	self._RegionTag = "OcclusionServiceRegion"
 	self._NoOccludeTag = "OcclusionServiceNoOcclude"
-	self._Radius = 512
 
-	local highlights: {[BasePart]: Highlight} = {}
+	local highlights: { [BasePart]: Highlight } = {}
 	if DEBUG_HIGHLIGHT_ENABLED then
 		self._Maid:GiveTask(function()
 			for k, v in pairs(highlights) do
@@ -209,32 +219,30 @@ function OcclusionService.new()
 				v:Destroy()
 			end
 		end)
-	
 	end
 
 	if DEBUG_HIGHLIGHT_ENABLED then
-
-		self._Maid:GiveTask(self._OcclusionCamera.OnPartEnterFrustum:Connect(function(part: BasePart)
+		self._Maid:GiveTask(self.OcclusionCamera.OnPartEnterFrustum:Connect(function(part: BasePart)
 			if not highlights[part] then
 				local box = Instance.new("Highlight")
 				box.Adornee = part
 				box.FillTransparency = 0.5
 				box.Enabled = false
-				box.FillColor = Color3.new(1,1,1)
+				box.FillColor = Color3.new(1, 1, 1)
 				box.OutlineColor = box.FillColor
 				box.DepthMode = Enum.HighlightDepthMode.Occluded
 				box.Parent = part
 				highlights[part] = box
 			end
 		end))
-
 	end
 
-	self._Maid:GiveTask(self._OcclusionCamera.OnObscurePart:Connect(function(part: BasePart)
+	self._Maid:GiveTask(self.OcclusionCamera.OnObscurePart:Connect(function(part: BasePart)
+		print(`part obscured: {part:GetFullName()}`)
 		if DEBUG_HIGHLIGHT_ENABLED then
 			local box = highlights[part]
 			if box then
-				box.OutlineColor = Color3.new(0,0,1)
+				box.OutlineColor = Color3.new(0, 0, 1)
 				box.Enabled = true
 				box.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
 				box.FillColor = box.OutlineColor
@@ -242,11 +250,13 @@ function OcclusionService.new()
 		end
 		self:_HidePart(part)
 	end))
-	self._Maid:GiveTask(self._OcclusionCamera.OnViewPart:Connect(function(part: BasePart)
+	self._Maid:GiveTask(self.OcclusionCamera.OnViewPart:Connect(function(part: BasePart)
+		print(`part viewed: {part:GetFullName()}`)
+
 		if DEBUG_HIGHLIGHT_ENABLED then
 			local box = highlights[part]
 			if box then
-				box.OutlineColor = Color3.new(1,0,0)
+				box.OutlineColor = Color3.new(1, 0, 0)
 				box.Enabled = false
 				box.DepthMode = Enum.HighlightDepthMode.Occluded
 				box.FillColor = box.OutlineColor
@@ -254,7 +264,9 @@ function OcclusionService.new()
 		end
 		self:_LoadPart(part)
 	end))
-	self._Maid:GiveTask(self._OcclusionCamera.OnPartExitFrustum:Connect(function(part: BasePart)
+	self._Maid:GiveTask(self.OcclusionCamera.OnPartExitFrustum:Connect(function(part: BasePart)
+		print(`part exited: {part:GetFullName()}`)
+
 		if DEBUG_HIGHLIGHT_ENABLED then
 			local box = highlights[part]
 			if box then
@@ -264,28 +276,11 @@ function OcclusionService.new()
 		end
 		self:_HidePart(part)
 	end))
-	
-	local position: Vector3?
-	self._Maid:GiveTask(RunService.RenderStepped:Connect(function(deltaTime: number)
-		local origin = self._OcclusionCamera.Instance.CFrame.Position
-		self._OcclusionCamera.OnlyUpdateOnCameraMove = self.QueryRadiusOnMovementOnly
-		self._OcclusionCamera.WorldRoot = self.WorldRoot
-		if position ~= origin or self.QueryRadiusOnMovementOnly == false then
-			position = origin
 
-			local overlapParams = OverlapParams.new()
-			overlapParams.FilterDescendantsInstances = CollectionService:GetTagged(self._RegionTag)
-			overlapParams.FilterType = Enum.RaycastFilterType.Include
-			overlapParams.RespectCanCollide = false
-
-			local regionParts: {[number]: Instance} = self.WorldRoot:GetPartBoundsInRadius(origin, self._Radius, overlapParams) :: any
-			self._OcclusionCamera.RaycastParams.FilterDescendantsInstances = regionParts
-		end
-	end))
 
 	if CurrentOcclusionService ~= nil then
-		 CurrentOcclusionService:Destroy()
-		 CurrentOcclusionService = nil :: any
+		CurrentOcclusionService:Destroy()
+		CurrentOcclusionService = nil :: any
 	end
 	CurrentOcclusionService = self
 
